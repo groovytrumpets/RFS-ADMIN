@@ -3,8 +3,6 @@ package dal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DBContext {
 
@@ -13,10 +11,10 @@ public class DBContext {
     // 1. SỬA URL: 
     //    - Dùng "jdbc:mysql://" (thay vì "jdbc:sqlserver://")
     //    - Dùng port 3306 (là port mặc định của MySQL, thay vì 1433)
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/rfs"; // Giả sử database của bạn tên là EPMS
+    private static final String DB_URL = "jdbc:mysql://onehost-webhn072403.000nethost.com:3306/ylvqitishosting_rfs"; // Giả sử database của bạn tên là EPMS
     
-    private static final String DB_USER = "root"; // Tên user MySQL
-    private static final String DB_PASS = "Khanh20041011"; // Mật khẩu của user đó
+    private static final String DB_USER = "ylvqitishosting_khanh"; // Tên user MySQL
+    private static final String DB_PASS = "Khanh20041011@"; // Mật khẩu của user đó
 
     // 2. SỬA DRIVER:
     //    - Dùng "com.mysql.cj.jdbc.Driver" (cho bản 8+)

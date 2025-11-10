@@ -17,6 +17,13 @@ import model.Genre;
 import model.Movie;
 import java.sql.Statement; // Cần cho việc lấy ID
 import java.sql.Types;    // Cần cho setNull
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import model.MovieList;
+import model.Rating;
+import model.Report;
 import model.Translation;
 // import java.util.ArrayList; // Bị lặp, đã có ở trên
 // import java.util.List; // Bị lặp, đã có ở trên
@@ -46,6 +53,84 @@ public class AdminDAO {
         
         return user;
     }
+    public List<User> getUsersLast6Months() {
+    List<User> userList = new ArrayList<>();
+
+    // Lấy 6 tháng gần nhất (SQL tự tính bằng hàm DATEADD)
+    String sql = "SELECT * FROM [User] " +
+                 "WHERE create_date >= DATEADD(MONTH, -6, GETDATE()) " +
+                 "ORDER BY create_date DESC";
+
+    try (Connection connection = DBContext.getConnection();
+         PreparedStatement ps = connection.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            userList.add(extractUser(rs));
+        }
+
+    } catch (SQLException | ClassNotFoundException e) {
+        System.out.println("Lỗi khi lấy danh sách người dùng 6 tháng gần đây: " + e.getMessage());
+        e.printStackTrace();
+    }
+
+    return userList;
+}
+    public Map<String, Integer> getUserCountByMonthLast6Months() {
+    Map<String, Integer> data = new LinkedHashMap<>();
+
+    String sql = "SELECT DATE_FORMAT(create_date, '%Y-%m') AS month, COUNT(*) AS count "
+               + "FROM `User` "
+               + "WHERE create_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) "
+               + "GROUP BY DATE_FORMAT(create_date, '%Y-%m') "
+               + "ORDER BY month;";
+
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            data.put(rs.getString("month"), rs.getInt("count"));
+        }
+
+    } catch (SQLException | ClassNotFoundException e) {
+        System.out.println("Lỗi khi thống kê người dùng theo tháng: " + e.getMessage());
+        e.printStackTrace();
+    }
+
+    // === Thêm các tháng còn thiếu (đảm bảo có đủ 6 tháng gần nhất) ===
+    Map<String, Integer> fullData = new LinkedHashMap<>();
+    LocalDate now = LocalDate.now();
+
+    for (int i = 5; i >= 0; i--) {
+        LocalDate month = now.minusMonths(i);
+        String key = month.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        fullData.put(key, data.getOrDefault(key, 0)); // Nếu không có trong DB thì 0
+    }
+
+    return fullData;
+}
+    public Map<String, Integer> countUsersByStatus() {
+        // Sử dụng LinkedHashMap để duy trì thứ tự (tùy chọn)
+        Map<String, Integer> statusCounts = new LinkedHashMap<>();
+        String sql = "SELECT status, COUNT(*) AS count FROM User GROUP BY status";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                statusCounts.put(status, count);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Xử lý lỗi phù hợp (ví dụ: log lỗi)
+        }
+        return statusCounts;
+    }
 
     // 2. Bỏ "throws SQLException" vì chúng ta sẽ bắt lỗi (catch) bên trong
     public List<User> getAllUsers() {
@@ -69,23 +154,44 @@ public class AdminDAO {
         }
         return userList;
     }
+    public String getAllTransactions() {
+        
+        String transaction ="";
+        
+        // `User` là từ khóa trong MySQL, cần bọc bằng dấu backtick `
+        String sql = "Select sum(amount) AS total_amount from ylvqitishosting_rfs.Transactions where status like 'completed';";
+        try (Connection connection = DBContext.getConnection(); // <-- GỌI HÀM STATIC
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+
+            if (rs.next()) {
+            transaction = rs.getString("total_amount"); // ✅ Lấy giá trị từ cột alias
+        }
+        } catch (SQLException | ClassNotFoundException e) {
+            System.out.println("Lỗi khi lấy danh sách User: " + e.getMessage());
+            e.printStackTrace(); // In chi tiết lỗi ra console
+        }
+        return transaction;
+    }
     
-    public boolean updateUser(int idUser, String username, String fullName, String email, String phone, String gender) {
+    public boolean updateUser(int idUser, String username, String fullName, String email, String phone, String gender, String status) {
         
         // Câu lệnh SQL update
         String sql = "UPDATE `User` SET username = ?, fullName = ?, email = ?, "
-                   + "phone = ?, gender = ? WHERE idUser = ?";
+                   + "phone = ?, gender = ?, status =? WHERE idUser = ?";
         
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
-            
+            System.out.println(status);
             // Set các tham số cho câu lệnh SQL
             ps.setString(1, username);
             ps.setString(2, fullName);
             ps.setString(3, email);
             ps.setString(4, phone);
             ps.setString(5, gender);
-            ps.setInt(6, idUser); // Tham số cuối cùng là idUser cho điều kiện WHERE
+            ps.setString(6, status);
+            ps.setInt(7, idUser); // Tham số cuối cùng là idUser cho điều kiện WHERE
             
             // executeUpdate() trả về số dòng bị ảnh hưởng
             int rowsAffected = ps.executeUpdate();
@@ -192,6 +298,98 @@ public class AdminDAO {
         }
         
         return genreList; // Trả về danh sách (có thể rỗng nếu bị lỗi)
+    }
+    public List<Report> getAllReports() {
+        List<Report> reportList = new ArrayList<>();
+        String sql = "SELECT * FROM `Reports`";
+
+        try (Connection connection = DBContext.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                reportList.add(extractReport(rs));
+            }
+
+        } catch (SQLException | ClassNotFoundException e) {
+            System.out.println("Lỗi khi lấy danh sách Report: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return reportList;
+    }
+
+    private Report extractReport(ResultSet rs) throws SQLException {
+        Report r = new Report();
+        r.setIdReport(rs.getInt("idReport"));
+        r.setRatingIdRating(rs.getInt("Rating_idRating"));
+        r.setUserIdUserReporter(rs.getInt("User_idUser_reporter"));
+        r.setReason(rs.getString("reason"));
+        r.setStatus(rs.getString("status"));
+        r.setCreateDate(rs.getTimestamp("create_date"));
+        return r;
+    }
+    public List<Rating> getAllRatings() {
+        List<Rating> ratingList = new ArrayList<>();
+        String sql = "SELECT * FROM `Rating`";
+
+        try (Connection connection = DBContext.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                ratingList.add(extractRating(rs));
+            }
+
+        } catch (SQLException | ClassNotFoundException e) {
+            System.out.println("Lỗi khi lấy danh sách Rating: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return ratingList;
+    }
+
+    private Rating extractRating(ResultSet rs) throws SQLException {
+        Rating r = new Rating();
+        r.setIdRating(rs.getInt("idRating"));
+        r.setStatus(rs.getString("status"));
+        r.setComment(rs.getString("comment"));
+        r.setScore(rs.getFloat("score"));
+        r.setUserIdUser(rs.getInt("User_idUser"));
+        r.setMovieIdMovie(rs.getInt("Movie_idMovie"));
+        return r;
+    }
+    public List<MovieList> getAllMovieLists() {
+        List<MovieList> movieLists = new ArrayList<>();
+        String sql = "SELECT * FROM `Movie_lists`";
+
+        try (Connection connection = DBContext.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                movieLists.add(extractMovieList(rs));
+            }
+
+        } catch (SQLException | ClassNotFoundException e) {
+            System.out.println("Lỗi khi lấy danh sách MovieList: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return movieLists;
+    }
+
+    private MovieList extractMovieList(ResultSet rs) throws SQLException {
+        MovieList m = new MovieList();
+        m.setIdMovieCollections(rs.getInt("idMovie_collections"));
+        m.setListName(rs.getString("list_name"));
+        m.setDescription(rs.getString("description"));
+        m.setVisibility(rs.getString("visibility"));
+        m.setStatus(rs.getString("status"));
+        m.setCreateDate(rs.getTimestamp("create_date"));
+        m.setSlug(rs.getString("slug"));
+        m.setUserIdUser(rs.getInt("User_idUser"));
+        return m;
     }
 
     //==================================================================
@@ -663,7 +861,35 @@ public class AdminDAO {
         return idList;
     }
     
+    public boolean updateReport(int idReport, int ratingIdRating, int userIdUserReporter, String reason, String status) {
     
+    // Câu lệnh SQL UPDATE. Lưu ý: Trường createDate thường không được cập nhật
+    // sau khi Report đã được tạo, nên tôi không đưa nó vào đây.
+    String sql = "UPDATE `Report` SET ratingIdRating = ?, userIdUserReporter = ?, reason = ?, "
+               + "status = ? WHERE idReport = ?";
+    
+    try (Connection connection = DBContext.getConnection();
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+        
+        // Set các tham số cho câu lệnh SQL
+        ps.setInt(1, ratingIdRating); // Tham số 1: ratingIdRating
+        ps.setInt(2, userIdUserReporter); // Tham số 2: userIdUserReporter
+        ps.setString(3, reason); // Tham số 3: reason
+        ps.setString(4, status); // Tham số 4: status
+        ps.setInt(5, idReport); // Tham số 5: idReport cho điều kiện WHERE
+        
+        // executeUpdate() trả về số dòng bị ảnh hưởng
+        int rowsAffected = ps.executeUpdate();
+        
+        // Nếu có 1 dòng bị ảnh hưởng, tức là update thành công
+        return rowsAffected > 0; 
+        
+    } catch (SQLException | ClassNotFoundException e) {
+        System.out.println("Lỗi khi cập nhật Report (DAO): " + e.getMessage());
+        e.printStackTrace();
+        return false; // Trả về false nếu có lỗi
+    }
+}
     public static void main(String[] args) {
         AdminDAO add = new AdminDAO();
         List<User> userList = add.getAllUsers();

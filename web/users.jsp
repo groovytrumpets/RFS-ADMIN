@@ -305,34 +305,34 @@
                                                 <th>Status</th>
                                                 <th>Username</th>
                                                 <th>Password</th>
-                                                <th>Full Name</th> <th>Email</th>     <th>Phones</th>    <th>Create Date</th> <th>Edit</th>
+                                                <th>Full Name</th> <th>Email</th>     <th>Phones</th>    <th>Gender</th> <th>Edit</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
                                                 <td>
-                                                    <input form="insertForm" name="status"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="status"  class="form-control form-control-sm"  />
                                                 </td>
                                                 <td>
-                                                    <input form="insertForm" name="username"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="username"  class="form-control form-control-sm" />
                                                 </td>
                                                 <td>
-                                                    <input form="insertForm" name="password"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="password"  class="form-control form-control-sm"  />
                                                 </td>
                                                 <td>
-                                                    <input form="insertForm" name="fullname"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="fullname"  class="form-control form-control-sm"  />
                                                 </td>
                                                 <td>
-                                                    <input form="insertForm" name="email"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="email"  class="form-control form-control-sm"  />
                                                 </td>
                                                 <td>
-                                                    <input form="insertForm" name="phone"  class="form-control form-control-sm" required />
+                                                    <input form="insertForm" name="phone"  class="form-control form-control-sm"  />
                                                 </td>
                                                 <td>
                                                     <select form="insertForm" name="gender" class="form-control form-control-sm">
-                                                        <option value="Nam" ${u.gender == 'Male' ? 'selected' : ''}>Male</option>
-                                                        <option value="Nữ" ${u.gender == 'Female' ? 'selected' : ''}>Female</option>
-                                                        <option value="Khác" ${u.gender == 'Other' ? 'selected' : ''}>Other</option>
+                                                        <option value="Male" ${u.gender == 'Male' ? 'selected' : ''}>Male</option>
+                                                        <option value="Female" ${u.gender == 'Female' ? 'selected' : ''}>Female</option>
+                                                        <option value="Other" ${u.gender == 'Other' ? 'selected' : ''}>Other</option>
                                                     </select>
                                                 </td>
                                                 <td>
@@ -367,7 +367,7 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Username</th>
-                                                <th>Full Name</th> <th>Email</th>     <th>Phones</th>    <th>Create Date</th> <th>Edit</th>
+                                                <th>Full Name</th> <th>Email</th>     <th>Phones</th>    <th>Status</th><th>Gender</th> <th>Edit</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -391,22 +391,29 @@
                                                     <%-- 4. Sửa thuộc tính: "u.userName" -> "u.username" --%>
                                                     <%-- 5. Thêm thuộc tính "form" để liên kết input với form --%>
                                                     <td>
-                                                        <input form="${formId}" name="username" value="${u.username}" class="form-control form-control-sm" required />
+                                                        <input form="${formId}" name="username" value="${u.username}" class="form-control form-control-sm"  />
                                                     </td>
                                                     <td>
-                                                        <input form="${formId}" name="fullname" value="${u.fullName}" class="form-control form-control-sm" required />
+                                                        <input form="${formId}" name="fullname" value="${u.fullName}" class="form-control form-control-sm"  />
                                                     </td>
                                                     <td>
-                                                        <input form="${formId}" name="email" value="${u.email}" class="form-control form-control-sm" required />
+                                                        <input form="${formId}" name="email" value="${u.email}" class="form-control form-control-sm"  />
                                                     </td>
                                                     <td>
-                                                        <input form="${formId}" name="phone" value="${u.phone}" class="form-control form-control-sm" required />
+                                                        <input form="${formId}" name="phone" value="${u.phone}" class="form-control form-control-sm"  />
+                                                    </td>
+                                                    <td>
+                                                        <select form="${formId}" name="status" class="form-control form-control-sm">
+                                                            <option value="inactive" ${u.status == 'inactive' ? 'selected' : ''}>Inactive</option>
+                                                            <option value="active" ${u.status == 'active' ? 'selected' : ''}>Active</option>
+                                                            <option value="pro" ${u.status == 'pro' ? 'selected' : ''}>PRO 👑</option>
+                                                        </select>
                                                     </td>
                                                     <td>
                                                         <select form="${formId}" name="gender" class="form-control form-control-sm">
-                                                            <option value="Nam" ${u.gender == 'Nam' ? 'selected' : ''}>Nam</option>
-                                                            <option value="Nữ" ${u.gender == 'Nữ' ? 'selected' : ''}>Nữ</option>
-                                                            <option value="Khác" ${u.gender == 'Khác' ? 'selected' : ''}>Khác</option>
+                                                            <option value="Male" ${u.gender == 'Male' ? 'selected' : ''}>Nam</option>
+                                                            <option value="Female" ${u.gender == 'Female' ? 'selected' : ''}>Nữ</option>
+                                                            <option value="Other" ${u.gender == 'Other' ? 'selected' : ''}>Khác</option>
                                                         </select>
                                                     </td>
                                                     <td>

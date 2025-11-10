@@ -82,10 +82,12 @@ public class UserUpdateServlet extends HttpServlet {
             String email = request.getParameter("email");
             String phone = request.getParameter("phone");
             String gender = request.getParameter("gender");
+            String status = request.getParameter("status");
+            
 
             // 3. Khởi tạo DAO và gọi hàm update
             AdminDAO dao = new AdminDAO();
-            boolean success = dao.updateUser(idUser, username, fullname, email, phone, gender);
+            boolean success = dao.updateUser(idUser, username, fullname, email, phone, gender, status);
 
             if (success) {
                 System.out.println("Cập nhật thành công cho User ID: " + idUser);
